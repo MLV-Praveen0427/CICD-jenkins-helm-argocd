@@ -1,24 +1,17 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_IMAGE_NAME = "dahitsahadev/node-argocd"
-        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_IMAGE_NAME = "saranraj023/my-node-argocd"
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"  // This is the tag for the Docker image, using the build number
     }
-        
+
     stages {
         stage('Checkout') {
             steps {
                 // Checkout the source code from your Git repository
                 git branch: 'main',
-                url: 'https://github.com/SahadevDahit/CICI-jenkins-helm-argocd.git'
-            }
-        }
- 
-        stage('Remove All Previous Docker Images') {
-            steps {
-                // Remove all Docker images
-                sh 'docker rmi -f $(docker images -a -q) || true'
+                    url: 'https://github.com/MLV-Praveen0427/CICD-jenkins-helm-argocd.git'
             }
         }
 
@@ -35,22 +28,15 @@ pipeline {
             steps {
                 script {
                     // Log in to Docker registry and push the Docker image
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-password', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
                         sh "echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin"
                         sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                     }
                 }
             }
         }
-        
-        stage('Trigger ManifestUpdate') {
-            steps {
-                echo "triggering updatemanifestjob"
-                build job: 'updatemanifest', parameters: [string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)]
-            }
-        }
     }
-    
+
     post {
         success {
             echo 'Pipeline execution successful!'
